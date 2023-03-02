@@ -7,6 +7,7 @@ const {
   GraphQLList,
   GraphQLInt,
   GraphQLNonNull,
+  GraphQLInputObjectType,
 } = require("graphql");
 const app = express();
 
@@ -44,6 +45,15 @@ const BookType = new GraphQLObjectType({
   }),
 });
 
+//BookInputType
+const BookInputType = new GraphQLInputObjectType({
+  name: "BookInput",
+  fields: () => ({
+    name: { type: GraphQLNonNull(GraphQLString) },
+    authorId: { type: GraphQLNonNull(GraphQLInt) },
+  }),
+});
+
 //Author Type
 const AuthorType = new GraphQLObjectType({
   name: "Author",
@@ -60,13 +70,20 @@ const AuthorType = new GraphQLObjectType({
   }),
 });
 
+//AuthorInputType
+const AuthorInputType = new GraphQLInputObjectType({
+  name: "AuthorInput",
+  fields: () => ({
+    name: { type: GraphQLNonNull(GraphQLString) },
+  }),
+});
+
 //Root Query
 
 const RootQueryType = new GraphQLObjectType({
   name: "Query",
   description: "Root Query",
   fields: () => ({
-
     //Books
     books: {
       type: new GraphQLList(BookType),
@@ -110,7 +127,6 @@ const RootMutationType = new GraphQLObjectType({
   name: "Mutation",
   description: "Root Mutation",
   fields: () => ({
-
     //Add Book
     addBook: {
       type: BookType,
@@ -130,6 +146,25 @@ const RootMutationType = new GraphQLObjectType({
       },
     },
 
+    //Add Books
+    addBooks: {
+      type: GraphQLList(BookType),
+      args: {
+        bookList: { type: GraphQLList(BookInputType) },
+      },
+      resolve(parent, args) {
+        const newBooks = args.bookList.map((book) => {
+          books.push({
+            id: books.length + 1,
+            name: book.name,
+            authorId: book.authorId,
+          });
+        });
+
+        return books;
+      },
+    },
+
     //Add Author
     addAuthor: {
       type: AuthorType,
@@ -141,6 +176,24 @@ const RootMutationType = new GraphQLObjectType({
         const author = { id: authors.length + 1, name: args.name };
         authors.push(author);
         return author;
+      },
+    },
+
+    //Add Authors
+    addAuthors: {
+      type: GraphQLList(AuthorType),
+      args: {
+        authorList: { type: GraphQLList(AuthorInputType) },
+      },
+      resolve(parent, args) {
+        const newAuthor = args.authorList.map((author) => {
+          authors.push({
+            id: authors.length + 1,
+            name: author.name,
+          });
+        });
+
+        return authors;
       },
     },
   }),
